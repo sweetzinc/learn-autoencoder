@@ -1,0 +1,17 @@
+services:
+  asn-ae:
+    build: 
+      context: .
+      dockerfile: Dockerfile 
+    image: asn-ae-image
+    container_name: asn-ae-container 
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    shm_size: "8gb"
+    tty: true
+    stdin_open: true

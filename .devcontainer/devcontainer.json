@@ -1,0 +1,55 @@
+{
+
+    "name": "asn-ae",
+    "dockerComposeFile": "./docker-compose.yml",
+    "service": "asn-ae",
+
+    "remoteEnv": {
+        // "PATH": "/usr/local/cuda/bin:${containerEnv:PATH}",
+        "PATH":"/opt/conda/bin:/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64",
+        "XLA_FLAGS": "--xla_gpu_cuda_data_dir=/usr/local/cuda",
+        "PYTHONPATH":"/workspace"
+    },
+    
+    "mounts": [
+        "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+        "source=C:\\docker_share,target=/mounted_data,type=bind,consistency=cached"
+    ],
+    "workspaceFolder": "/workspace",
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	"features": {
+		"ghcr.io/devcontainers/features/python:1": {}
+	},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	//"forwardPorts": [],
+
+    "remoteUser": "root",
+    "postCreateCommand": {
+        "git-config": "git config --global core.autocrlf input",
+        "nvidia-check": "nvidia-smi"
+    },
+
+	// Configure tool-specific properties.
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-azuretools.vscode-docker",
+                "ms-python.python",
+                "ms-toolsai.jupyter",
+                "ms-toolsai.vscode-jupyter-cell-tags",
+                "ms-toolsai.jupyter-keymap",
+                "ms-toolsai.jupyter-renderers",
+                "ms-toolsai.vscode-jupyter-slideshow",
+                "ms-toolsai.tensorboard",
+                // "ms-python.vscode-pylance"
+            ],
+            "settings": {
+                "files.eol": "\n",
+                "python.defaultInterpreterPath": "/opt/conda/bin/python"}
+            }
+    }
+    
+
+}

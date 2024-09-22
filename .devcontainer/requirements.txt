@@ -1,0 +1,17 @@
+lightning
+ipykernel
+scipy
+
+opencv-python
+matplotlib
+scikit-learn
+scikit-image
+h5py
+pandas
+
+ipywidgets
+notebook
+
+seaborn
+transformers
+tensorboard
