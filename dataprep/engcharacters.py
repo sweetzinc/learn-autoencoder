@@ -1,12 +1,19 @@
+#%%
 import os
 from PIL import Image
 import numpy as np
+import pandas as pd
+from tqdm import tqdm 
+from pathlib import Path 
+import json
 
 def process_image(input_path, output_path):
+    NEWSIZE = 28
     """
     Processes a binary image:
     - Crops it to a square area containing the foreground object.
-    - Resizes it to 100x100 pixels with smoothing.
+    - Add a a random margin of 0.05-0.2 when cropping. 
+    - Resizes it to NEWSIZExNEWSIZE pixels with smoothing.
     - Saves the processed image.
     """
     # Load the image and convert to grayscale
@@ -38,7 +45,7 @@ def process_image(input_path, output_path):
     square_size = max(bbox_width, bbox_height)
     
     # Optionally, add a margin around the object (e.g., 10%)
-    margin = 0.1  # 10% margin
+    margin = np.random.uniform(low=0.05, high=0.2) # 0.1
     square_size = int(square_size * (1 + margin))
     half_size = square_size / 2
     
@@ -81,21 +88,70 @@ def process_image(input_path, output_path):
     img_cropped = img.crop((x_start, y_start, x_end, y_end))
 
     # Resize the image to 100x100 pixels with smoothing
-    img_resized = img_cropped.resize((100, 100), Image.LANCZOS)
+    img_resized = img_cropped.resize((NEWSIZE, NEWSIZE), Image.LANCZOS)
     
     # Save the processed image
     img_resized.save(output_path)
 
-# Directories containing input and output images
-input_dir = 'path_to_input_images'
-output_dir = 'path_to_output_images'
 
-# Create the output directory if it doesn't exist
-os.makedirs(output_dir, exist_ok=True)
+def get_code_letter_mapping(csvfpath:str)->dict:
+    # csvfpath =  '/mounted_data/downloaded/EngLetters/labels.csv'
+    df = pd.read_csv(csvfpath, header=0)
+    mappings = {}
+    for idx in tqdm(df.index) :
+        code = int(df.loc[idx, 'image'][3:6])
+        if code in mappings.keys() :
+            continue
+        label = str(df.loc[idx, 'label'])
+        mappings.update({code:label})
+    return mappings
 
-# Process each image in the input directory
-for filename in os.listdir(input_dir):
-    if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff')):
-        input_path = os.path.join(input_dir, filename)
-        output_path = os.path.join(output_dir, filename)
-        process_image(input_path, output_path)
+def calculate_mean_std(image_dir):
+    pixel_values = []
+
+    for filename in tqdm(os.listdir(image_dir)):
+        if filename.lower().endswith('.png'):
+            img_path = os.path.join(image_dir, filename)
+            img = Image.open(img_path).convert('L')
+            img_np = np.array(img)
+            pixel_values.append(img_np.flatten())
+
+    pixel_values = np.concatenate(pixel_values)
+    mean = np.mean(pixel_values)
+    std = np.std(pixel_values)
+
+    return mean, std
+
+#%% calculate_mean_std
+if __name__ == '__main__':
+    image_dir = '/mounted_data/downloaded/EngLetters/crop_rescale'
+    mean, std = calculate_mean_std(image_dir)
+    print(f"Mean: {mean}, Std: {std}")
+
+#%% process_image
+if 0 : #__name__ == '__main__':
+    # Directories containing input and output images
+    input_dir = '/mounted_data/downloaded/EngLetters/Img'
+    output_dir = '/mounted_data/downloaded/EngLetters/crop_rescale'
+
+    # Create the output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Process each image in the input directory
+    for filename in tqdm(os.listdir(input_dir)):
+        if filename.lower().endswith('.png'): # (('.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff')):
+            input_path = os.path.join(input_dir, filename)
+            output_path = os.path.join(output_dir, filename)
+            process_image(input_path, output_path)
+#%% get_code_letter_mapping
+if 0:# __name__ == '__main__':
+    csvfpath = '/mounted_data/downloaded/EngLetters/labels.csv'
+    mapping = get_code_letter_mapping(csvfpath)
+
+    # Path to save the JSON file
+    json_output_path = '/mounted_data/downloaded/EngLetters/mapping.json'
+    # Save the mapping dictionary to a JSON file
+    with open(json_output_path, 'w') as json_file:
+        json.dump(mapping, json_file, indent=4)
+
+# %%
