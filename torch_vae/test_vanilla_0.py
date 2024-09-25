@@ -10,7 +10,7 @@ from torchvision.utils import save_image
 from models.vanilla_vae import VanillaVAE
 from lightning_vae import VAELightning
 from lightningdata_mnist import MNISTDataModule
-from lightning_engchar import HandwrittenCharDataModule, load_specific_labels
+from torch_vae.lightningdata_engchar import HandwrittenCharDataModule, load_specific_labels
 
 #%%
 if __name__ == '__name__' :
