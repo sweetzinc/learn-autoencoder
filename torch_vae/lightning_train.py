@@ -2,6 +2,7 @@
 import os 
 from pathlib import Path
 from typing import List, Callable, Union, Any, TypeVar, Tuple
+import yaml
 # PyTorch
 import torch
 # PyTorch Lightning
@@ -12,6 +13,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from models.vanilla_vae import VanillaVAE
 from lightning_vae import VAELightning
 from lightningdata_mnist import MNISTDataModule
+
 
 if __name__ == '__main__' :
 
@@ -64,3 +66,13 @@ if __name__ == '__main__' :
     mnist_datamodule.setup('fit')
     mnist_datamodule.setup('test')
     trainer.fit(lightning_module, datamodule=mnist_datamodule)
+
+    # Save the configuration
+    config = {
+        'vae_config': vae_config,
+        'lightning_config': lightning_config,
+        'data_config': data_config,
+        'log_config': log_config
+    }
+    with open(os.path.join(log_config['save_dir'], "configs", 'config.yml'), 'w') as config_file:
+        yaml.dump(config, config_file)
