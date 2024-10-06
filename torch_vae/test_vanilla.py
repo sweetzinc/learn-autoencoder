@@ -1,7 +1,7 @@
 #%%
 import os
 import torch
-
+import numpy as np 
 from matplotlib import pyplot as plt
 from torchvision import transforms
 from torchvision.utils import save_image
@@ -85,6 +85,25 @@ if __name__ == '__main__':
     plt.xlabel('Latent Dimension 1')
     plt.ylabel('Latent Dimension 2')
     plt.title('MNIST Latent Space Visualization')
+    plt.show()
+#%%
+if True:
+    # Generate a grid of latent vectors
+    n = 10
+    figure = plt.figure(figsize=(10, 10))
+    grid_x = np.linspace(-3, 3, n)
+    grid_y = np.linspace(-3, 3, n)
+
+    # Generate images by decoding the latent vectors
+    for i, yi in enumerate(grid_y):
+        for j, xi in enumerate(grid_x):
+            z_sample = torch.tensor([[xi, yi]], dtype=torch.float32).to(device)
+            with torch.no_grad():
+                generated_image = trained_model.model.decode(z_sample).cpu()
+            ax = plt.subplot(n, n, i * n + j + 1)
+            plt.imshow(generated_image.squeeze().numpy(), cmap='gray')
+            ax.axis('off')
+
     plt.show()
 
 #%% 
