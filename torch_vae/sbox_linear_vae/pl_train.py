@@ -10,8 +10,10 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 
-from models.vanilla_vae import VanillaVAE
-from lightning_vae_new import VAELightning
+import sys
+sys.path.append('/workspace/torch_vae')
+from models import vae_models 
+from pl_linvae import LVAELightning 
 from lightningdata_mnist import MNISTDataModule
 from asn_utils import ConfigSaverCallback
 
@@ -19,28 +21,33 @@ from asn_utils import ConfigSaverCallback
 if __name__ == '__main__' :
     print("torch version=", torch.__version__)
     print("torch.cuda.is_available() = ", torch.cuda.is_available())
+
     vae_config = {
-        'in_channels': 1,
+        'name': 'LinearVAE',
+        'input_dim': 784,  # 28x28 flattened
         'latent_dim': 2,
-        'hidden_dims': [32, 64, ],
-        'width': 28, 'height': 28}
+        'in_channels': 1,
+        'hidden_dims': [512, 256, 128, 64, 32, 16]
+    }
     lightning_config = {
         'LR': 0.005,
         'weight_decay': 0.0,
         'scheduler_gamma': 0.95,
         'kld_weight': 0.00025,
         'manual_seed': 1265 }
-    data_config = { 'data_dirpath':"/mounted_data/downloaded", 'batch_size':256 }
-    log_config = {'save_dir': '/workspace/torch_vae/logs/', 'name': 'VanillaVAE_new'}
+    
+    data_config = { 'data_dir':"/mounted_data/downloaded", 'batch_size':256 , 'flatten': True}
+    log_config = {'save_dir': '/workspace/torch_vae/logs/', 'name': 'LinearVAE'}
     config = {
         'vae_config': vae_config,
         'lightning_config': lightning_config,
         'data_config': data_config,
         'log_config': log_config
     }
-    vae_model = VanillaVAE(**vae_config)
-    lightning_module = VAELightning(vae_model, lightning_config)
-    mnist_datamodule = MNISTDataModule(data_dir=data_config['data_dirpath'], batch_size=data_config['batch_size'])
+    vae_model = vae_models[vae_config['name']](**vae_config)
+    lightning_module = LVAELightning(vae_model, lightning_config)
+    # mnist_datamodule = MNISTDataModule(data_dir=data_config['data_dirpath'], batch_size=data_config['batch_size'])
+    mnist_datamodule = MNISTDataModule(**data_config)
 
     # Prepare for training
     pl.seed_everything(lightning_config['manual_seed'], True)
@@ -51,8 +58,7 @@ if __name__ == '__main__' :
 
 
     # Set up Training
-    tb_logger = TensorBoardLogger(save_dir=log_config['save_dir'],
-                                name=log_config['name'],)
+    tb_logger = TensorBoardLogger(**log_config)
     # Initialize Callback
     config_saver = ConfigSaverCallback(config=config, save_dir=tb_logger.log_dir)
 
@@ -68,22 +74,10 @@ if __name__ == '__main__' :
         ],
         accelerator="gpu" if torch.cuda.is_available() else "cpu",
         devices=1,
-        max_epochs=5,
+        max_epochs=100,
         check_val_every_n_epoch=1)
 
-    # Path(f"{tb_logger.log_dir}/Samples").mkdir(exist_ok=True, parents=True)
-    # Path(f"{tb_logger.log_dir}/Reconstructions").mkdir(exist_ok=True, parents=True)
-
     mnist_datamodule.setup('fit')
-    mnist_datamodule.setup('test')
+    # mnist_datamodule.setup('test')
     trainer.fit(lightning_module, datamodule=mnist_datamodule)
 
-    # # Save the configuration
-    # config = {
-    #     'vae_config': vae_config,
-    #     'lightning_config': lightning_config,
-    #     'data_config': data_config,
-    #     'log_config': log_config
-    # }
-    # with open(os.path.join(log_config['save_dir'], "configs", 'config.yml'), 'w') as config_file:
-    #     yaml.dump(config, config_file)

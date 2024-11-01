@@ -18,10 +18,14 @@ import pytorch_lightning as pl
 
 
 class MNISTDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir: str = "./", batch_size:int=128):
+    def __init__(self, data_dir: str = "./", batch_size:int=128, flatten: bool = False):
         super().__init__()
         self.data_dir = data_dir
         self.transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
+        if flatten :
+            self.transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,)), 
+                                                 transforms.Lambda(lambda x: x.view(-1, 1))])
+
         self.batch_size = batch_size
 
     def prepare_data(self):
