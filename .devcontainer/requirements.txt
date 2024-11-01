@@ -15,3 +15,5 @@ notebook
 seaborn
 transformers
 tensorboard
+
+umap-learn
