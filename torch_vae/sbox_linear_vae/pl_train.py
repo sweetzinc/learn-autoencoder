@@ -26,8 +26,7 @@ if __name__ == '__main__' :
         'name': 'LinearVAE',
         'input_dim': 784,  # 28x28 flattened
         'latent_dim': 2,
-        'in_channels': 1,
-        'hidden_dims': [512, 256, 128, 64, 32, 16]
+        'hidden_dims': [512, 128, 32, 16]
     }
     lightning_config = {
         'LR': 0.005,
@@ -81,3 +80,5 @@ if __name__ == '__main__' :
     # mnist_datamodule.setup('test')
     trainer.fit(lightning_module, datamodule=mnist_datamodule)
 
+
+# %%
